@@ -1,0 +1,24 @@
+[Unit]
+Description=Campus Service API (Flask + gunicorn)
+After=network.target mysql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/campus-service-api
+Environment="PATH=/srv/campus-service-api/.venv/bin"
+EnvironmentFile=/srv/campus-service-api/.env
+ExecStart=/srv/campus-service-api/.venv/bin/gunicorn -c deploy/gunicorn.conf.py wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=3
+
+# 基础加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
