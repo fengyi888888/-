@@ -32,6 +32,7 @@ campus-service-api/
 │  ├─ cli.py            init-db / seed / create-admin
 │  └─ api/              auth / items / categories / favorites / orders / meta
 ├─ tests/               pytest 用例（内存库，用例间隔离）
+├─ scripts/smoke_test.py  HTTP 冒烟脚本（真库全链路 + 并发下单）
 ├─ docs/api.md          接口文档
 ├─ deploy/              gunicorn 配置、systemd unit、nginx 配置
 ├─ wsgi.py              WSGI 入口
@@ -104,6 +105,22 @@ pytest -k orders  # 只跑订单相关
 
 测试使用 SQLite 内存库，每个用例独立建表/销毁；`tests/conftest.py` 提供
 注册、登录、造商品的公共夹具。
+
+### 冒烟测试（连真实数据库）
+
+单元测试跑在内存库上，冒烟脚本则直接打真实服务，验证 MySQL 上的完整链路：
+
+```bash
+# 先启动服务，再另开一个终端
+set BASE_URL=http://127.0.0.1:5000
+python scripts/smoke_test.py
+```
+
+覆盖：健康检查 → 注册/登录 → 发布中文商品 → 关键词检索 → 收藏 →
+下单/支付/确认收货 → 并发下单只有一方成功 → 已完成订单不可取消。
+
+> 已在 MySQL 8.0.46（utf8mb4）上实测：13 项全部通过，并发下单结果为 `[201, 409]`，
+> 每个商品只产生 1 笔成交订单。
 
 ## 接口
 
