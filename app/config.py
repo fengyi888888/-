@@ -2,10 +2,12 @@
 
 import os
 from datetime import timedelta
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+# 显式指定 .env 位置：不依赖启动时的工作目录，避免从别的目录启动就读不到配置
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 
 def _env_int(name: str, default: int) -> int:

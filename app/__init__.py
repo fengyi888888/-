@@ -19,6 +19,7 @@ def create_app(config_name: str | None = None, overrides: dict | None = None) ->
         app.config.update(overrides)
 
     _setup_logging(app)
+    app.logger.info("database: %s", _mask_uri(app.config["SQLALCHEMY_DATABASE_URI"]))
 
     db.init_app(app)
     register_blueprints(app)
@@ -29,6 +30,16 @@ def create_app(config_name: str | None = None, overrides: dict | None = None) ->
 
     register_cli(app)
     return app
+
+
+def _mask_uri(uri: str) -> str:
+    """日志里隐藏数据库密码，只保留结构。"""
+    if "://" in uri and "@" in uri:
+        scheme, rest = uri.split("://", 1)
+        credentials, host = rest.split("@", 1)
+        user = credentials.split(":", 1)[0]
+        return f"{scheme}://{user}:***@{host}"
+    return uri
 
 
 def _setup_logging(app: Flask) -> None:
