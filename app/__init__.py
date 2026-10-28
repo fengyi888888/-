@@ -18,6 +18,9 @@ def create_app(config_name: str | None = None, overrides: dict | None = None) ->
     if overrides:
         app.config.update(overrides)
 
+    # 让中文在 JSON 响应里原样输出，而不是 \uXXXX 转义
+    app.json.ensure_ascii = False
+
     _setup_logging(app)
     app.logger.info("database: %s", _mask_uri(app.config["SQLALCHEMY_DATABASE_URI"]))
 
