@@ -12,7 +12,7 @@
 | ORM | SQLAlchemy 2.x / Flask-SQLAlchemy 3.1 |
 | 数据库 | MySQL 8.0（utf8mb4），测试用 SQLite 内存库 |
 | 认证 | PyJWT（HS256，access/refresh 双令牌）+ PBKDF2 密码哈希 |
-| 测试 | pytest，34 个用例覆盖认证、商品、订单、权限、限流 |
+| 测试 | pytest，36 个用例覆盖认证、商品、订单、权限、限流 |
 | 部署 | gunicorn + systemd + nginx（Linux） |
 
 ## 目录结构
@@ -99,9 +99,11 @@ curl http://127.0.0.1:5000/healthz
 ## 测试
 
 ```bash
-pytest            # 34 passed
+pytest            # 36 passed
 pytest -k orders  # 只跑订单相关
 ```
+
+![pytest 36 passed](docs/pytest-36-passed.png)
 
 测试使用 SQLite 内存库，每个用例独立建表/销毁；`tests/conftest.py` 提供
 注册、登录、造商品的公共夹具。
@@ -121,6 +123,11 @@ python scripts/smoke_test.py
 
 > 已在 MySQL 8.0.46（utf8mb4）上实测：13 项全部通过，并发下单结果为 `[201, 409]`，
 > 每个商品只产生 1 笔成交订单。
+
+并发下单的完整证据：两个买家同时 `curl` 同一件商品，A 拿到 `201 CREATED`，
+B 拿到 `409 CONFLICT`，数据库里这件商品只有 1 笔订单，商品状态被置为 `locked`。
+
+![并发下单：201 vs 409](docs/concurrent-order-201-409.png)
 
 ## 接口
 

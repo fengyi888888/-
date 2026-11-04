@@ -93,6 +93,13 @@ def test_seller_can_see_sold_orders(client, user_token, second_token, category):
     assert buyer_view.get_json()["data"]["pagination"]["total"] == 1
 
 
+def test_create_order_requires_login(client):
+    """没带 token 就下单：在 login_required 那一层就被拦下，返回 401。"""
+    resp = client.post("/api/v1/orders", json={"item_id": 1})
+    assert resp.status_code == 401
+    assert resp.get_json()["code"] == 40101
+
+
 def test_stranger_cannot_read_order(client, user_token, second_token, category):
     item_id = _publish(client, user_token, category.id)
     order = _buy(client, second_token, item_id).get_json()["data"]
@@ -103,3 +110,11 @@ def test_stranger_cannot_read_order(client, user_token, second_token, category):
     ).get_json()["data"]["access_token"]
     resp = client.get(f"/api/v1/orders/{order['id']}", headers=auth(stranger))
     assert resp.status_code == 403
+
+
+def test_seller_cannot_pay_order(client, user_token, second_token, category):
+    item_id = _publish(client, user_token, category.id)
+    order = _buy(client, second_token, item_id).get_json()["data"]
+    resp = client.post(f"/api/v1/orders/{order['id']}/pay", headers=auth(user_token))
+    assert resp.status_code == 403
+    assert resp.get_json()["code"] == 40301
